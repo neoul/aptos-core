@@ -28,6 +28,7 @@ make it so that a reference to a global object can be returned from a function.
 -  [Struct `DeleteRef`](#0x1_object_DeleteRef)
 -  [Struct `ExtendRef`](#0x1_object_ExtendRef)
 -  [Struct `TransferRef`](#0x1_object_TransferRef)
+-  [Struct `DelegatedTransferRef`](#0x1_object_DelegatedTransferRef)
 -  [Struct `LinearTransferRef`](#0x1_object_LinearTransferRef)
 -  [Struct `TransferEvent`](#0x1_object_TransferEvent)
 -  [Constants](#@Constants_0)
@@ -43,6 +44,7 @@ make it so that a reference to a global object can be returned from a function.
 -  [Function `generate_delete_ref`](#0x1_object_generate_delete_ref)
 -  [Function `generate_extend_ref`](#0x1_object_generate_extend_ref)
 -  [Function `generate_transfer_ref`](#0x1_object_generate_transfer_ref)
+-  [Function `generate_delegated_transfer_ref`](#0x1_object_generate_delegated_transfer_ref)
 -  [Function `generate_signer`](#0x1_object_generate_signer)
 -  [Function `object_from_constructor_ref`](#0x1_object_object_from_constructor_ref)
 -  [Function `create_guid`](#0x1_object_create_guid)
@@ -53,6 +55,7 @@ make it so that a reference to a global object can be returned from a function.
 -  [Function `disable_ungated_transfer`](#0x1_object_disable_ungated_transfer)
 -  [Function `enable_ungated_transfer`](#0x1_object_enable_ungated_transfer)
 -  [Function `generate_linear_transfer_ref`](#0x1_object_generate_linear_transfer_ref)
+-  [Function `generate_linear_transfer_ref_from_delegate_ref`](#0x1_object_generate_linear_transfer_ref_from_delegate_ref)
 -  [Function `transfer_with_ref`](#0x1_object_transfer_with_ref)
 -  [Function `transfer_call`](#0x1_object_transfer_call)
 -  [Function `transfer`](#0x1_object_transfer)
@@ -304,6 +307,52 @@ Used to create LinearTransferRef, hence ownership transfer.
 
 </details>
 
+<a name="0x1_object_DelegatedTransferRef"></a>
+
+## Struct `DelegatedTransferRef`
+
+Used to delegate the object transfer (ownership transfer) to a delegator.
+
+
+<pre><code><b>struct</b> <a href="object.md#0x1_object_DelegatedTransferRef">DelegatedTransferRef</a> <b>has</b> drop, store
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>self: <b>address</b></code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>owner: <b>address</b></code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>delegator: <b>address</b></code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>expiration: u64</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
 <a name="0x1_object_LinearTransferRef"></a>
 
 ## Struct `LinearTransferRef`
@@ -400,6 +449,16 @@ Exceeds maximum nesting for an object transfer.
 
 
 <pre><code><b>const</b> <a href="object.md#0x1_object_EMAXIMUM_NESTING">EMAXIMUM_NESTING</a>: u64 = 6;
+</code></pre>
+
+
+
+<a name="0x1_object_ENOT_OBJECT_DELEGATOR"></a>
+
+The caller does not have the permission of the object transfer.
+
+
+<pre><code><b>const</b> <a href="object.md#0x1_object_ENOT_OBJECT_DELEGATOR">ENOT_OBJECT_DELEGATOR</a>: u64 = 8;
 </code></pre>
 
 
@@ -825,6 +884,38 @@ Generates the TransferRef, which can be used to manage object transfers.
 
 </details>
 
+<a name="0x1_object_generate_delegated_transfer_ref"></a>
+
+## Function `generate_delegated_transfer_ref`
+
+Generates the DelegatedTransferRef, which can be used to delegate object transfers to a delegator.
+The delegator can transfer the object to another account or object instead of the owner.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="object.md#0x1_object_generate_delegated_transfer_ref">generate_delegated_transfer_ref</a>(owner: &<a href="../../aptos-stdlib/../move-stdlib/doc/signer.md#0x1_signer">signer</a>, <a href="object.md#0x1_object">object</a>: <b>address</b>, delegator: <b>address</b>, expiration: u64): <a href="object.md#0x1_object_DelegatedTransferRef">object::DelegatedTransferRef</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="object.md#0x1_object_generate_delegated_transfer_ref">generate_delegated_transfer_ref</a>(
+    owner: &<a href="../../aptos-stdlib/../move-stdlib/doc/signer.md#0x1_signer">signer</a>, <a href="object.md#0x1_object">object</a>: <b>address</b>, delegator: <b>address</b>, expiration: u64
+): <a href="object.md#0x1_object_DelegatedTransferRef">DelegatedTransferRef</a> <b>acquires</b> <a href="object.md#0x1_object_ObjectCore">ObjectCore</a> {
+    <b>let</b> owner_address = <a href="../../aptos-stdlib/../move-stdlib/doc/signer.md#0x1_signer_address_of">signer::address_of</a>(owner);
+    // Verify the owner is the real owner of the <a href="object.md#0x1_object">object</a>.
+    <a href="object.md#0x1_object_verify_ungated_and_descendant">verify_ungated_and_descendant</a>(owner_address, <a href="object.md#0x1_object">object</a>);
+    // Generate the <a href="object.md#0x1_object_DelegatedTransferRef">DelegatedTransferRef</a> <b>with</b> the owner <b>address</b> <b>to</b> delegate and delegator <b>address</b>.
+    <a href="object.md#0x1_object_DelegatedTransferRef">DelegatedTransferRef</a> { self: <a href="object.md#0x1_object">object</a>, owner: owner_address, delegator, expiration }
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_object_generate_signer"></a>
 
 ## Function `generate_signer`
@@ -1084,6 +1175,46 @@ time of generation is the owner at the time of transferring.
     <b>let</b> owner = <a href="object.md#0x1_object_owner">owner</a>(<a href="object.md#0x1_object_Object">Object</a>&lt;<a href="object.md#0x1_object_ObjectCore">ObjectCore</a>&gt; { inner: ref.self });
     <a href="object.md#0x1_object_LinearTransferRef">LinearTransferRef</a> {
         self: ref.self,
+        owner,
+    }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_object_generate_linear_transfer_ref_from_delegate_ref"></a>
+
+## Function `generate_linear_transfer_ref_from_delegate_ref`
+
+Create a LinearTransferRef for a one-time transfer.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="object.md#0x1_object_generate_linear_transfer_ref_from_delegate_ref">generate_linear_transfer_ref_from_delegate_ref</a>(delegator: &<a href="../../aptos-stdlib/../move-stdlib/doc/signer.md#0x1_signer">signer</a>, ref: &<a href="object.md#0x1_object_DelegatedTransferRef">object::DelegatedTransferRef</a>, target_object: <b>address</b>): <a href="object.md#0x1_object_LinearTransferRef">object::LinearTransferRef</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="object.md#0x1_object_generate_linear_transfer_ref_from_delegate_ref">generate_linear_transfer_ref_from_delegate_ref</a>(
+    delegator: &<a href="../../aptos-stdlib/../move-stdlib/doc/signer.md#0x1_signer">signer</a>, ref: &<a href="object.md#0x1_object_DelegatedTransferRef">DelegatedTransferRef</a>, target_object: <b>address</b>
+): <a href="object.md#0x1_object_LinearTransferRef">LinearTransferRef</a> <b>acquires</b> <a href="object.md#0x1_object_ObjectCore">ObjectCore</a> {
+    // verify ref.delegator
+    <b>assert</b>!(<a href="../../aptos-stdlib/../move-stdlib/doc/signer.md#0x1_signer_address_of">signer::address_of</a>(delegator) == ref.delegator, <a href="object.md#0x1_object_ENOT_OBJECT_DELEGATOR">ENOT_OBJECT_DELEGATOR</a>);
+    // verified ref.
+    <a href="object.md#0x1_object_verify_ungated_and_descendant">verify_ungated_and_descendant</a>(ref.owner, ref.self);
+    // verified target_object
+    <b>if</b> (ref.self != target_object) {
+        // The child <a href="object.md#0x1_object">object</a> belongs <b>to</b> the ref <a href="object.md#0x1_object">object</a> can be transfered.
+        <a href="object.md#0x1_object_verify_ungated_and_descendant">verify_ungated_and_descendant</a>(ref.self, target_object);
+    };
+    <b>let</b> owner = <a href="object.md#0x1_object_owner">owner</a>(<a href="object.md#0x1_object_Object">Object</a>&lt;<a href="object.md#0x1_object_ObjectCore">ObjectCore</a>&gt; { inner: target_object });
+    <a href="object.md#0x1_object_LinearTransferRef">LinearTransferRef</a> {
+        self: target_object,
         owner,
     }
 }

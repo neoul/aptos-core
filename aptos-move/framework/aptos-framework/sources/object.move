@@ -41,6 +41,8 @@ module aptos_framework::object {
     const EMAXIMUM_NESTING: u64 = 6;
     /// The resource is not stored at the specified address.
     const ERESOURCE_DOES_NOT_EXIST: u64 = 7;
+    /// The caller does not have the permission of the object transfer.
+    const ENOT_OBJECT_DELEGATOR: u64 = 8;
 
     /// Maximum nesting from one object to another. That is objects can technically have infinte
     /// nesting, but any checks such as transfer will only be evaluated this deep.
@@ -111,6 +113,14 @@ module aptos_framework::object {
     /// Used to create LinearTransferRef, hence ownership transfer.
     struct TransferRef has drop, store {
         self: address,
+    }
+
+    /// Used to delegate the object transfer (ownership transfer) to a delegator.
+    struct DelegatedTransferRef has drop, store {
+        self: address,
+        owner: address,
+        delegator: address,
+        expiration: u64,
     }
 
     /// Used to perform transfers. This locks transferring ability to a single time use bound to
@@ -217,6 +227,18 @@ module aptos_framework::object {
         TransferRef { self: ref.self }
     }
 
+    /// Generates the DelegatedTransferRef, which can be used to delegate object transfers to a delegator.
+    /// The delegator can transfer the object to another account or object instead of the owner.
+    public fun generate_delegated_transfer_ref(
+        owner: &signer, object: address, delegator: address, expiration: u64
+    ): DelegatedTransferRef acquires ObjectCore {
+        let owner_address = signer::address_of(owner);
+        // Verify the owner is the real owner of the object.
+        verify_ungated_and_descendant(owner_address, object);
+        // Generate the DelegatedTransferRef with the owner address to delegate and delegator address.
+        DelegatedTransferRef { self: object, owner: owner_address, delegator, expiration }
+    }
+
     /// Create a signer for the ConstructorRef
     public fun generate_signer(ref: &ConstructorRef): signer {
         create_signer(ref.self)
@@ -289,6 +311,26 @@ module aptos_framework::object {
         let owner = owner(Object<ObjectCore> { inner: ref.self });
         LinearTransferRef {
             self: ref.self,
+            owner,
+        }
+    }
+
+    /// Create a LinearTransferRef for a one-time transfer.
+    public fun generate_linear_transfer_ref_from_delegate_ref(
+        delegator: &signer, ref: &DelegatedTransferRef, target_object: address
+    ): LinearTransferRef acquires ObjectCore {
+        // verify ref.delegator
+        assert!(signer::address_of(delegator) == ref.delegator, ENOT_OBJECT_DELEGATOR);
+        // verified ref.
+        verify_ungated_and_descendant(ref.owner, ref.self);
+        // verified target_object
+        if (ref.self != target_object) {
+            // The child object belongs to the ref object can be transfered.
+            verify_ungated_and_descendant(ref.self, target_object);
+        };
+        let owner = owner(Object<ObjectCore> { inner: target_object });
+        LinearTransferRef {
+            self: target_object,
             owner,
         }
     }
@@ -507,6 +549,22 @@ module aptos_framework::object {
 
         hero_equip(creator, hero, weapon);
         hero_unequip(creator, hero, weapon);
+        hero_equip(creator, hero, weapon);
+        hero_unequip(creator, hero, weapon);
+    }
+
+    #[test(creator = @0x123, delegator = @0x124)]
+    fun test_object_transfer_delegate_ref(creator: &signer, delegator: &signer) acquires Hero, ObjectCore {
+        let (_, hero) = create_hero(creator);
+        let (_, weapon) = create_weapon(creator);
+
+        hero_equip(creator, hero, weapon);
+        let delegate_ref = generate_delegated_transfer_ref(
+            creator, object_address(&hero), signer::address_of(delegator), 0);
+        let liner_transfer_ref = generate_linear_transfer_ref_from_delegate_ref(
+            delegator, &delegate_ref, object_address(&weapon));
+        transfer_with_ref(liner_transfer_ref, @0x456);
+        assert!(owner(weapon) == @0x456, 0);
     }
 
     #[test(creator = @0x123)]
@@ -516,6 +574,9 @@ module aptos_framework::object {
         let linear_transfer_ref = generate_linear_transfer_ref(&transfer_ref);
         transfer_with_ref(linear_transfer_ref, @0x456);
         assert!(owner(hero) == @0x456, 0);
+        linear_transfer_ref = generate_linear_transfer_ref(&transfer_ref);
+        transfer_with_ref(linear_transfer_ref, @0x123);
+        assert!(owner(hero) == @0x123, 0);
     }
 
     #[test(creator = @0x123)]
