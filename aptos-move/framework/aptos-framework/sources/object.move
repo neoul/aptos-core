@@ -44,7 +44,7 @@ module aptos_framework::object {
     const ERESOURCE_DOES_NOT_EXIST: u64 = 7;
     /// The caller does not have the permission of the object transfer.
     const ENOT_OBJECT_DELEGATOR: u64 = 8;
-    /// The caller does not have the permission of the object transfer.
+    /// The delegated transfer is out of date.
     const EDELEGATED_TRANSFER_EXPIRED: u64 = 9;
 
     /// Maximum nesting from one object to another. That is objects can technically have infinte
@@ -318,7 +318,8 @@ module aptos_framework::object {
         }
     }
 
-    /// Create a LinearTransferRef for a one-time transfer.
+    /// Create a LinearTransferRef for a one-time transfer from the DelegatedTransferRef.
+    /// Delegator can transfer the object and child objects belong to the object.
     public fun generate_linear_transfer_ref_from_delegate_ref(
         delegator: &signer, ref: &DelegatedTransferRef, target_object: address
     ): LinearTransferRef acquires ObjectCore {
@@ -329,11 +330,10 @@ module aptos_framework::object {
         };
         // verify ref.delegator
         assert!(signer::address_of(delegator) == ref.delegator, ENOT_OBJECT_DELEGATOR);
-        // verified ref.
+        // verify ref.owner is the owner of the delegated object (ref.self)
         verify_ungated_and_descendant(ref.owner, ref.self);
-        // verified target_object
+        // verify target_object belongs to the delegated object (ref.self)
         if (ref.self != target_object) {
-            // The child object belongs to the ref object can be transfered.
             verify_ungated_and_descendant(ref.self, target_object);
         };
         let owner = owner(Object<ObjectCore> { inner: target_object });
