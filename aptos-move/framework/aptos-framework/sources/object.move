@@ -26,6 +26,7 @@ module aptos_framework::object {
     use aptos_framework::event;
     use aptos_framework::from_bcs;
     use aptos_framework::guid;
+    use aptos_framework::timestamp;
 
     /// An object already exists at this address
     const EOBJECT_EXISTS: u64 = 1;
@@ -43,6 +44,8 @@ module aptos_framework::object {
     const ERESOURCE_DOES_NOT_EXIST: u64 = 7;
     /// The caller does not have the permission of the object transfer.
     const ENOT_OBJECT_DELEGATOR: u64 = 8;
+    /// The caller does not have the permission of the object transfer.
+    const EDELEGATED_TRANSFER_EXPIRED: u64 = 9;
 
     /// Maximum nesting from one object to another. That is objects can technically have infinte
     /// nesting, but any checks such as transfer will only be evaluated this deep.
@@ -319,6 +322,11 @@ module aptos_framework::object {
     public fun generate_linear_transfer_ref_from_delegate_ref(
         delegator: &signer, ref: &DelegatedTransferRef, target_object: address
     ): LinearTransferRef acquires ObjectCore {
+        let expiration = *&ref.expiration;
+        if (expiration > 0) {
+            assert!(timestamp::now_seconds() <= expiration, 
+                error::invalid_argument(EDELEGATED_TRANSFER_EXPIRED));
+        };
         // verify ref.delegator
         assert!(signer::address_of(delegator) == ref.delegator, ENOT_OBJECT_DELEGATOR);
         // verified ref.
@@ -554,7 +562,7 @@ module aptos_framework::object {
     }
 
     #[test(creator = @0x123, delegator = @0x124)]
-    fun test_object_transfer_delegate_ref(creator: &signer, delegator: &signer) acquires Hero, ObjectCore {
+    fun test_object_delegated_transfer_ref(creator: &signer, delegator: &signer) acquires Hero, ObjectCore {
         let (_, hero) = create_hero(creator);
         let (_, weapon) = create_weapon(creator);
 
