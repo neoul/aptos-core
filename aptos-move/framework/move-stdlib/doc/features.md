@@ -25,6 +25,12 @@ the Move stdlib, the Aptos stdlib, and the Aptos framework.
 -  [Function `blake2b_256_enabled`](#0x1_features_blake2b_256_enabled)
 -  [Function `get_resource_groups_feature`](#0x1_features_get_resource_groups_feature)
 -  [Function `resource_groups_enabled`](#0x1_features_resource_groups_enabled)
+-  [Function `get_multisig_accounts_feature`](#0x1_features_get_multisig_accounts_feature)
+-  [Function `multisig_accounts_enabled`](#0x1_features_multisig_accounts_enabled)
+-  [Function `get_delegation_pools_feature`](#0x1_features_get_delegation_pools_feature)
+-  [Function `delegation_pools_enabled`](#0x1_features_delegation_pools_enabled)
+-  [Function `get_bls12381_basic_operations_feature`](#0x1_features_get_bls12381_basic_operations_feature)
+-  [Function `bls12381_basic_operations_enabled`](#0x1_features_bls12381_basic_operations_enabled)
 -  [Function `change_feature_flags`](#0x1_features_change_feature_flags)
 -  [Function `is_enabled`](#0x1_features_is_enabled)
 -  [Function `set`](#0x1_features_set)
@@ -100,6 +106,21 @@ Lifetime: transient
 
 
 
+<a name="0x1_features_BLS12381_BASIC_OPERATIONS"></a>
+
+Whether the basic operations over some BLS12381 structures are enabled in the algebra module.
+
+Basic operations include element (de)serialization, field/group arithmetic, hash-to-structure, casting, etc.
+BLS12381 structures controlled by this flag includes <code>Fq12</code>, <code>G1</code>, <code>G2</code>, <code>Gt</code>, <code>Fr</code>.
+
+Lifetime: transient
+
+
+<pre><code><b>const</b> <a href="features.md#0x1_features_BLS12381_BASIC_OPERATIONS">BLS12381_BASIC_OPERATIONS</a>: u64 = 12;
+</code></pre>
+
+
+
 <a name="0x1_features_CODE_DEPENDENCY_CHECK"></a>
 
 Whether validation of package dependencies is enabled, and the related native function is
@@ -123,12 +144,33 @@ Lifetime: transient
 
 
 
+<a name="0x1_features_DELEGATION_POOLS"></a>
+
+Whether delegation pools are enabled.
+Lifetime: transient
+
+
+<pre><code><b>const</b> <a href="features.md#0x1_features_DELEGATION_POOLS">DELEGATION_POOLS</a>: u64 = 11;
+</code></pre>
+
+
+
 <a name="0x1_features_EFRAMEWORK_SIGNER_NEEDED"></a>
 
 The provided signer has not a framework address.
 
 
 <pre><code><b>const</b> <a href="features.md#0x1_features_EFRAMEWORK_SIGNER_NEEDED">EFRAMEWORK_SIGNER_NEEDED</a>: u64 = 1;
+</code></pre>
+
+
+
+<a name="0x1_features_MULTISIG_ACCOUNTS"></a>
+
+Whether multisig accounts (different from accounts with multi-ed25519 auth keys) are enabled.
+
+
+<pre><code><b>const</b> <a href="features.md#0x1_features_MULTISIG_ACCOUNTS">MULTISIG_ACCOUNTS</a>: u64 = 10;
 </code></pre>
 
 
@@ -561,6 +603,144 @@ Lifetime: transient
 
 </details>
 
+<a name="0x1_features_get_multisig_accounts_feature"></a>
+
+## Function `get_multisig_accounts_feature`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="features.md#0x1_features_get_multisig_accounts_feature">get_multisig_accounts_feature</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="features.md#0x1_features_get_multisig_accounts_feature">get_multisig_accounts_feature</a>(): u64 { <a href="features.md#0x1_features_MULTISIG_ACCOUNTS">MULTISIG_ACCOUNTS</a> }
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_features_multisig_accounts_enabled"></a>
+
+## Function `multisig_accounts_enabled`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="features.md#0x1_features_multisig_accounts_enabled">multisig_accounts_enabled</a>(): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="features.md#0x1_features_multisig_accounts_enabled">multisig_accounts_enabled</a>(): bool <b>acquires</b> <a href="features.md#0x1_features_Features">Features</a> {
+    <a href="features.md#0x1_features_is_enabled">is_enabled</a>(<a href="features.md#0x1_features_MULTISIG_ACCOUNTS">MULTISIG_ACCOUNTS</a>)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_features_get_delegation_pools_feature"></a>
+
+## Function `get_delegation_pools_feature`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="features.md#0x1_features_get_delegation_pools_feature">get_delegation_pools_feature</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="features.md#0x1_features_get_delegation_pools_feature">get_delegation_pools_feature</a>(): u64 { <a href="features.md#0x1_features_DELEGATION_POOLS">DELEGATION_POOLS</a> }
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_features_delegation_pools_enabled"></a>
+
+## Function `delegation_pools_enabled`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="features.md#0x1_features_delegation_pools_enabled">delegation_pools_enabled</a>(): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="features.md#0x1_features_delegation_pools_enabled">delegation_pools_enabled</a>(): bool <b>acquires</b> <a href="features.md#0x1_features_Features">Features</a> {
+    <a href="features.md#0x1_features_is_enabled">is_enabled</a>(<a href="features.md#0x1_features_DELEGATION_POOLS">DELEGATION_POOLS</a>)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_features_get_bls12381_basic_operations_feature"></a>
+
+## Function `get_bls12381_basic_operations_feature`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="features.md#0x1_features_get_bls12381_basic_operations_feature">get_bls12381_basic_operations_feature</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="features.md#0x1_features_get_bls12381_basic_operations_feature">get_bls12381_basic_operations_feature</a>(): u64 { <a href="features.md#0x1_features_BLS12381_BASIC_OPERATIONS">BLS12381_BASIC_OPERATIONS</a> }
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_features_bls12381_basic_operations_enabled"></a>
+
+## Function `bls12381_basic_operations_enabled`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="features.md#0x1_features_bls12381_basic_operations_enabled">bls12381_basic_operations_enabled</a>(): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="features.md#0x1_features_bls12381_basic_operations_enabled">bls12381_basic_operations_enabled</a>(): bool <b>acquires</b> <a href="features.md#0x1_features_Features">Features</a> {
+    <a href="features.md#0x1_features_is_enabled">is_enabled</a>(<a href="features.md#0x1_features_BLS12381_BASIC_OPERATIONS">BLS12381_BASIC_OPERATIONS</a>)
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_features_change_feature_flags"></a>
 
 ## Function `change_feature_flags`
@@ -780,8 +960,7 @@ Helper to check whether a feature flag is enabled.
 <pre><code><b>pragma</b> bv=b"0";
 <b>aborts_if</b> <b>false</b>;
 <b>ensures</b> feature / 8 &lt; len(<a href="features.md#0x1_features">features</a>);
-<b>ensures</b> <b>include</b> == (((int2bv(((1 <b>as</b> u8) &lt;&lt; ((feature % (8 <b>as</b> u64)) <b>as</b> u64) <b>as</b> u8)) <b>as</b> u8)
-    & <a href="features.md#0x1_features">features</a>[feature/8] <b>as</b> u8) &gt; (0 <b>as</b> u8));
+<b>ensures</b> <b>include</b> == <a href="features.md#0x1_features_spec_contains">spec_contains</a>(<a href="features.md#0x1_features">features</a>, feature);
 </code></pre>
 
 
@@ -799,8 +978,19 @@ Helper to check whether a feature flag is enabled.
 
 <pre><code><b>pragma</b> bv=b"0";
 <b>aborts_if</b> <b>false</b>;
-<b>ensures</b> result == ((feature / 8) &lt; len(<a href="features.md#0x1_features">features</a>) && ((int2bv((((1 <b>as</b> u8) &lt;&lt; ((feature % (8 <b>as</b> u64)) <b>as</b> u64)) <b>as</b> u8)) <b>as</b> u8)
-    & <a href="features.md#0x1_features">features</a>[feature/8] <b>as</b> u8) &gt; (0 <b>as</b> u8));
+<b>ensures</b> result == <a href="features.md#0x1_features_spec_contains">spec_contains</a>(<a href="features.md#0x1_features">features</a>, feature);
+</code></pre>
+
+
+
+
+<a name="0x1_features_spec_contains"></a>
+
+
+<pre><code><b>fun</b> <a href="features.md#0x1_features_spec_contains">spec_contains</a>(<a href="features.md#0x1_features">features</a>: <a href="vector.md#0x1_vector">vector</a>&lt;u8&gt;, feature: u64): bool {
+   ((int2bv((((1 <b>as</b> u8) &lt;&lt; ((feature % (8 <b>as</b> u64)) <b>as</b> u64)) <b>as</b> u8)) <b>as</b> u8) & <a href="features.md#0x1_features">features</a>[feature/8] <b>as</b> u8) &gt; (0 <b>as</b> u8)
+       && (feature / 8) &lt; len(<a href="features.md#0x1_features">features</a>)
+}
 </code></pre>
 
 

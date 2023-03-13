@@ -501,7 +501,7 @@ pub trait DbReader: Send + Sync {
     }
 
     /// Returns if the state store pruner is enabled.
-    fn is_state_pruner_enabled(&self) -> Result<bool> {
+    fn is_state_merkle_pruner_enabled(&self) -> Result<bool> {
         unimplemented!()
     }
 
@@ -554,7 +554,7 @@ impl MoveStorage for &dyn DbReader {
         let config_value_option = self.get_state_value_by_version(
             &StateKey::access_path(AccessPath::new(
                 CORE_CODE_ADDRESS,
-                access_path_for_config(config_id).path,
+                access_path_for_config(config_id)?.path,
             )),
             version,
         )?;

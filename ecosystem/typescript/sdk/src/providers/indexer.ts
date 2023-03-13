@@ -1,7 +1,7 @@
 import axios from "axios";
 
 import { AnyNumber } from "../bcs/types";
-import { MaybeHexString } from "../hex_string";
+import { MaybeHexString } from "../utils";
 import { GetAccountCurrentTokensQuery, GetTokenActivitiesQuery } from "../indexer/generated/operations";
 import { GetAccountCurrentTokens, GetTokenActivities } from "../indexer/generated/queries";
 
@@ -37,7 +37,7 @@ export class IndexerClient {
   private async queryIndexer<T>(graphqlQuery: GraphqlQuery): Promise<T> {
     const { data } = await axios.post(this.endpoint, graphqlQuery);
     if (data.errors) {
-      throw new Error(`Indexer data error ${data.errors}`);
+      throw new Error(`Indexer data error ${JSON.stringify(data.errors, null, " ")}`);
     }
     return data.data;
   }
